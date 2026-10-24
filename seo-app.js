@@ -15,7 +15,10 @@ function cutTail(t,maxW,font){if(px(t,font)<=maxW)return null;const ch=[...t];le
   while(n>0&&px(ch.slice(0,n).join('')+'...',font)>maxW)n--;return {n,cut:ch.slice(n).join('').trim()}}
 
 // ===== Лист Title (логика без изменений) =====
-const TPL={pl:'Serwis i naprawa ',uk:'Сервіс і ремонт ',ru:'Сервис и ремонт '};
+const TPL={pl:'Serwis i naprawa ',uk:'Сервіс і ремонт ',ru:'Сервис и ремонт ',en:' repair and service'};
+// Шаблон: PL/UK/RU — «Serwis i naprawa [устройства]», EN — «[Device] repair and service»
+const tplOk=(l,b)=>l==='en'?b.endsWith(TPL.en)&&len(b)>len(TPL.en):b.startsWith(TPL[l])&&len(b)>len(TPL[l]);
+const tplName=l=>l==='en'?'[Device]'+TPL.en:TPL[l]+'[устройства]';
 const EXTRA=/\s[—–-]\s.*|(cennik|ціни|цены|ceny)|\(.*?\)/gi;
 // Синонимы одного устройства, соединённые «и/і/i/та/oraz», — бессмысленный повтор
 const SYN=/(UPS|ДБЖ|ИБП)\s+(і|и|i|та|oraz)\s+(джерел|источник|zasilacz)|(джерел|источник|zasilacz)[^|]*?\s(і|и|i|та|oraz)\s+(UPS|ДБЖ|ИБП)/i;
@@ -26,7 +29,7 @@ const TITLE={key:'title',name:'Title',store:'omobonus-title-audit-v2',
     if((full.match(/Omobonus/g)||[]).length!==1||!full.endsWith(r.suffix))out.push({cls:'bad',txt:'Суффикс не стандартный или повторяется'});
     if(SYN.test(base))out.push({cls:'bad',txt:'Повтор синонимов одного устройства'});
     if(!r.exc){
-      if(!base.startsWith(TPL[r.l])||len(base)<=len(TPL[r.l]))out.push({cls:'bad',txt:`Не по шаблону «${TPL[r.l]}[устройства]»`});
+      if(!tplOk(r.l,base))out.push({cls:'bad',txt:`Не по шаблону «${tplName(r.l)}»`});
       const br=[...new Set(base.match(TBRANDS)||[])];if(br.length)out.push({cls:'bad',txt:`Производители: ${br.join(', ')}`});
       const ex=(base.match(EXTRA)||[]).map(x=>x.trim()).filter(Boolean);
       if(ex.length)out.push({cls:'bad',txt:`Лишнее: «${ex.join(' ')}»`});
@@ -47,13 +50,13 @@ const TITLE={key:'title',name:'Title',store:'omobonus-title-audit-v2',
     return t},
   reasonCol:false,doneLabel:'Утверждено',ownPh:'Ваш Title',
   intro:todo=>todo
-   ?`Шаблон: <b>Serwis i naprawa [устройства] | Omobonus Wrocław</b> (UK «Сервіс і ремонт …», RU «Сервис и ремонт …»). Суффикс добавляется автоматически и учтён в длине; показаны только проблемы (✕ — серьёзно, ◐ — может обрезаться хвост). <b>Утвердить</b> — принять предложение Claude. <b>Отклонить</b> — откроется поле «Свой вариант»: Claude проверит его после экспорта, до утверждения на сайт он не попадёт.`
+   ?`Шаблон: <b>Serwis i naprawa [устройства] | Omobonus Wrocław</b> (UK «Сервіс і ремонт …», RU «Сервис и ремонт …», EN «[Device] repair and service»). Суффикс добавляется автоматически и учтён в длине; показаны только проблемы (✕ — серьёзно, ◐ — может обрезаться хвост). <b>Утвердить</b> — принять предложение Claude. <b>Отклонить</b> — откроется поле «Свой вариант»: Claude проверит его после экспорта, до утверждения на сайт он не попадёт.`
    :`Только просмотр: применённые утверждённые Title и Title, полностью соответствующие стандарту. Повторно согласовывать не нужно.`,
   emptyTodo:'Новых ошибок, изменений и несогласованных Title нет — всё утверждено.'};
 
 // ===== Лист Description =====
-const DTAIL={pl:'Pełny cennik bez ukrytych kosztów',uk:'Повний прайс без прихованих витрат',ru:'Полный прайс без скрытых платежей'};
-const DCITY={pl:/we Wrocławiu/,uk:/у Вроцлаві/,ru:/во Вроцлаве/};
+const DTAIL={pl:'Pełny cennik bez ukrytych kosztów',uk:'Повний прайс без прихованих витрат',ru:'Полный прайс без скрытых платежей',en:'Full price list, no hidden costs'};
+const DCITY={pl:/we Wrocławiu/,uk:/у Вроцлаві/,ru:/во Вроцлаве/,en:/in Wrocław/};
 // Обещания, которые должны быть подтверждены на странице (слово само по себе не запрещено)
 const PROMISE=/bezpłatn\p{L}*|darmow\p{L}*|gratis|безкоштовн\p{L}*|бесплатн\p{L}*|najtań\p{L}*|найдешевш\p{L}*|самы\p{L}* дешев\p{L}*|najlepsz\p{L}*|найкращ\p{L}*|лучш\p{L}*|nr ?1\b|№ ?1\b|gwarancj\p{L}*|гаранті\p{L}*|гаранти\p{L}*|\b\d+ ?(min|minut|хв|мин)(?!\p{L})/giu;
 const DESC={key:'description',name:'Description',store:'omobonus-description-audit-v1',
@@ -61,7 +64,7 @@ const DESC={key:'description',name:'Description',store:'omobonus-description-aud
   // Правила — docs/seo/description-standard.md
   issues(r,t){const out=[];const n=len(t);
     if(n>160)out.push({cls:'bad',txt:`Длиннее 160 символов (+${n-160})`});
-    else if(n<150)out.push({cls:'warn',txt:`Короче 150 (${n}) — проверить, есть ли полезное дополнение; не удлинять искусственно`});
+    else if(n<150)out.push({cls:'warn',txt:`Короче 150 (${n})`});
     // Google показывает ~2 строки по ~600 px (Arial 14px) — оценка приблизительная, только предупреждение
     let lines=1,line='',rest=[];for(const w of t.split(' ')){const tr=line?line+' '+w:w;
       if(lines>2)rest.push(w);else if(px(tr,'14px Arial')>600&&line){lines++;line=w;if(lines>2)rest.push(w)}else line=tr}
@@ -72,7 +75,7 @@ const DESC={key:'description',name:'Description',store:'omobonus-description-aud
     // Производители техники запрещены; названия ПО/прошивок (Klipper, Marlin) — допустимы
     const br=[...new Set(t.match(BRANDS)||[])];if(br.length)out.push({cls:'bad',txt:`Производители: ${br.join(', ')}`});
     if(r.excPending)out.push({cls:'warn',txt:'Исключение ждёт согласования: '+r.excPending});
-    else{if(!r.exc&&!t.startsWith('✔ '+TPL[r.l]))out.push({cls:'bad',txt:`Не по шаблону «✔ ${TPL[r.l]}[urządzeń] …»`});
+    else{if(!r.exc&&(r.l==='en'?!/^✔ \S.* repair and service in Wrocław ✔/.test(t):!t.startsWith('✔ '+TPL[r.l])))out.push({cls:'bad',txt:r.l==='en'?'Не по шаблону «✔ [Device] repair and service in Wrocław ✔ …»':`Не по шаблону «✔ ${TPL[r.l]}[urządzeń] …»`});
       if(!t.endsWith(`✔ ${DTAIL[r.l]} ☎ 793 759 262`))out.push({cls:'bad',txt:`Концовка не «✔ ${DTAIL[r.l]} ☎ 793 759 262»`})}
     const pr=[...new Set((t.match(PROMISE)||[]).map(x=>x.trim()))];if(pr.length)out.push({cls:'warn',txt:`Проверить, что обещание подтверждено на странице: ${pr.join(', ')}`});
     // Повтор слова из первого блока (услуга в целом) в работах допустим: «Serwis i naprawa … ✔ Naprawa głowicy»
@@ -81,9 +84,11 @@ const DESC={key:'description',name:'Description',store:'omobonus-description-aud
     if(rep.size)out.push({cls:'warn',txt:`Повтор: ${[...rep].join(', ')}`});
     return out},
   status(r){if(r.review)return 'todo';if(r.appr)return r.appr.applied?'done':'todo';
+    if(!r.exc&&!r.excPending)return 'todo'; // новая страница/язык — Description ещё не согласован
     return r.prop&&r.prop!==r.t?'todo':'done'},
   reasons(r){const t=[];
     if(r.review){t.push(['rv',r.review.status==='ok'?'Ваш вариант — проверено, ожидает утверждения':'Исправление вашего варианта']);if(r.review.why)t.push(['p',r.review.why]);return t}
+    if(!r.appr&&!r.prop)t.push(['nw','Новая страница — Description ещё не согласован']);
     if(r.appr&&!r.appr.applied)t.push(['p','Утверждено, но на сайте другой Description']);
     if(r.why)t.push(['p',r.why]);
     for(const i of this.issues(r,r.t))t.push(['','Сейчас — '+i.txt]);
@@ -96,8 +101,8 @@ const DESC={key:'description',name:'Description',store:'omobonus-description-aud
     return h},
   reasonCol:true,doneLabel:'Без изменений',ownPh:'Ваш Description',
   intro:todo=>todo
-   ?`Формат: <b>✔ Serwis i naprawa [urządzeń] we Wrocławiu ✔ [2–4 konkretne prace] ✔ Pełny cennik bez ukrytych kosztów ☎ 793 759 262</b> (UK «… у Вроцлаві … ✔ Повний прайс без прихованих витрат», RU «… во Вроцлаве … ✔ Полный прайс без скрытых платежей» — те же работы в том же порядке, не дословный перевод). Цель 150–160 символов, максимум 160. Работы — реальные ремонтные работы из прайса, выбранные по исследованию (конкуренты, подсказки Google, Ads, прайс Omobonus); в колонке «Причина» — работы, предупреждения, доказательства. Правила — <b>docs/seo/description-standard.md</b>. ✕ — нарушение стандарта, ◐ — рекомендация (обрезка, длина меньше 150, проверить обещание), текст автоматически не меняется. <b>Утвердить</b> — принять предложение Claude. <b>Отклонить</b> — поле «Свой вариант»: Claude проверит его после экспорта, до утверждения на сайт ничего не попадёт.`
-   :`Утверждённые и применённые Description — только просмотр, повторно не согласуются. ◐ здесь — рекомендации стандарта, автоматически ничего не меняется. Согласованные исключения отмечены в «Истории»; «Исключение ждёт согласования» — отличие от стандарта, вопрос по которому ещё открыт.`,
+   ?`Формат: <b>✔ Serwis i naprawa [urządzeń] we Wrocławiu ✔ [2–4 konkretne prace] ✔ Pełny cennik bez ukrytych kosztów ☎ 793 759 262</b> (UK «… у Вроцлаві … ✔ Повний прайс без прихованих витрат», RU «… во Вроцлаве … ✔ Полный прайс без скрытых платежей», EN «✔ [Device] repair and service in Wrocław … ✔ Full price list, no hidden costs» — те же работы в том же порядке, не дословный перевод). Цель 150–160 символов, максимум 160. Работы — реальные ремонтные работы из прайса, выбранные по исследованию (конкуренты, подсказки Google, Ads, прайс Omobonus); в колонке «Причина» — работы, предупреждения, доказательства. Правила — <b>docs/seo/description-standard.md</b>. ✕ — нарушение стандарта, ◐ — рекомендация (обрезка, длина меньше 150, проверить обещание), текст автоматически не меняется. <b>Утвердить</b> — принять предложение Claude. <b>Отклонить</b> — поле «Свой вариант»: Claude проверит его после экспорта, до утверждения на сайт ничего не попадёт.`
+   :`Утверждённые и применённые Description — только просмотр, повторно не согласуются. ◐ здесь — рекомендации стандарта, автоматически ничего не меняется. «Исключение ждёт согласования» — отличие от стандарта, вопрос по которому ещё открыт.`,
   emptyTodo:'Новых ошибок и несогласованных Description нет.',
   emptyDone:'Таких страниц пока нет: ни один текущий Description не совпадает с согласованным форматом, поэтому все страницы вынесены в «Требуют решения».'};
 
@@ -147,7 +152,7 @@ function decRow(r){const s=st(r),d=dec(r),own=s.own||'';
   <td><div class="act"><button class="a ok ${d==='ok'?'on':''}" data-d="ok">Утвердить</button><button class="a no ${d==='no'?'on':''}" data-d="no">Отклонить</button></div></td></tr>`}
 function doneRow(r){const a=r.appr;
   return `<tr><td style="width:300px">${urlCell(r)}</td><td class="cur">${esc(r.t)}</td><td class="n">${numHtml(r,r.t,true)}</td>
-  <td class="hist">${a?`Утверждено ${a.date}${a.stage?` (${a.stage})`:''}${a.was?`<br><s>было: ${esc(a.was)}</s>`:''}`:''}${C===DESC&&r.exc?`<br><span class="tag p">Исключение: ${esc(r.exc)}</span>`:''}</td></tr>`}
+  <td class="hist">${a?`Утверждено ${a.date}`:''}</td></tr>`}
 function render(){const todo=UI.tab[C.key]==='todo';const want=todo?'todo':'done';
   const byPage={};C.rows.forEach(r=>{if(r.st===want)(byPage[r.s]=byPage[r.s]||[]).push(r)});
   let nav='',pages='';
@@ -155,9 +160,10 @@ function render(){const todo=UI.tab[C.key]==='todo';const want=todo?'todo':'done
     nav+=`<div class="g">${esc(g)}</div>`;
     for(const s of list){const rs=byPage[s];const id='p-'+(s||'home');
       nav+=`<a href="#${id}"><span>${esc(rs[0].name)}</span><span class="d" data-s="${s}">${todo?navCount(rs):rs.length}</span></a>`;
-      pages+=`<section class="page" id="${id}"><h2>${esc(rs[0].name)} <small>${s?'/uslugi/'+s:'/'}</small></h2><table>`;
+      const ttl=`${esc(rs[0].name)} <small>${s?'/uslugi/'+s:'/'}</small>`;
+      pages+=`<section class="page" id="${id}">${todo?`<h2>${ttl}</h2>`:''}<table>`;
       pages+=todo?`<thead><tr><th style="width:150px">Язык / URL</th><th>${C.name} сейчас</th><th style="width:${C.reasonCol?28:32}%">Предлагаемый ${C.name}</th><th style="width:${C.reasonCol?14:18}%">Символы до → после</th>${C.reasonCol?'<th style="width:16%">Причина</th>':''}<th style="width:190px">Решение</th></tr></thead><tbody>${rs.map(decRow).join('')}</tbody>`
-        :`<thead><tr><th style="width:300px">Язык / URL</th><th>${C.name} на сайте</th><th style="width:20%">Символы / предупреждение</th><th style="width:24%">История</th></tr></thead><tbody>${rs.map(doneRow).join('')}</tbody>`;
+        :`<thead><tr><th class="pth" style="width:300px">${ttl}</th><th>${C.name}</th><th style="width:20%">Символы / предупреждение</th><th style="width:24%">История</th></tr></thead><tbody>${rs.map(doneRow).join('')}</tbody>`;
       pages+='</table></section>'}}
   document.getElementById('hist').innerHTML=histHtml(C.key);
   document.getElementById('nav').innerHTML=nav;document.getElementById('nav').classList.toggle('hidden',!nav);
@@ -218,7 +224,7 @@ const HTAGS=['h1','h2','h3','h4','p','div'];
 const HST={proposed:'Предложено',approved:'Утверждено',rejected:'Отклонено',rework:'На доработке',implemented:'Внедрено'};
 const HDN={ok:'Утвердить',no:'Отклонить',own:'Свой вариант'};
 const HLIVE={applied:['уже внедрено','a'],changed:['изменилось на сайте','c'],missing:['не найдено на сайте','m']};
-const LORD={pl:0,uk:1,ru:2};
+const LORD={pl:0,uk:1,ru:2,en:3};
 const tagTxt=t=>/^h\d$/.test(t)?t.toUpperCase():`обычный текст (${t})`;
 const hTag=t=>`<code class="htag${/^h\d$/.test(t)?'':' plain'}">&lt;${t}&gt;</code>`;
 const mdc=s=>esc(s||'').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>');
