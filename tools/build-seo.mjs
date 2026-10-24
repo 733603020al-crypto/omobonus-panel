@@ -2,13 +2,15 @@
 // (omobonus-serwis/scripts/seo-audit/panel-template.html). Шаблон не меняется — здесь только
 // раскладка на файлы под строгую защиту страницы (без встроенных скриптов). Данных в результате нет:
 // их облачная панель читает из приватного omobonus-workspace (seo/panel-data.json).
-// Запуск: node tools/build-seo.mjs [путь к шаблону]
+// Запуск: node tools/build-seo.mjs [путь к шаблону] (без пути — самый свежий из omobonus-serwis / omobonus-en)
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const SRC = process.argv[2] || 'C:/Users/Andrii/omobonus-serwis/scripts/seo-audit/panel-template.html'
+// По умолчанию — самый свежий шаблон из рабочих папок сайта (новые вкладки/языки могут быть ещё не в test)
+const CANDIDATES = ['omobonus-serwis', 'omobonus-en'].map((d) => `C:/Users/Andrii/${d}/scripts/seo-audit/panel-template.html`).filter((p) => fs.existsSync(p))
+const SRC = process.argv[2] || CANDIDATES.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0]
 const SITE = 'https://serwis.omobonus.com.pl'
 
 const t = fs.readFileSync(SRC, 'utf8')
@@ -45,4 +47,4 @@ const head = `<!doctype html>
 fs.writeFileSync(path.join(OUT, 'seo.css'), `/* Создано tools/build-seo.mjs из шаблона SEO-панели сайта — руками не править */\n${css.trim()}\n`)
 fs.writeFileSync(path.join(OUT, 'seo-app.js'), `// Создано tools/build-seo.mjs из шаблона SEO-панели сайта — руками не править\n${js.trim()}\n`)
 fs.writeFileSync(path.join(OUT, 'seo.html'), `${head}\n${body.trim()}\n</body>\n</html>\n`)
-console.log('SEO-панель собрана: seo.html, seo.css, seo-app.js')
+console.log('SEO-панель собрана из ' + SRC + ': seo.html, seo.css, seo-app.js')
