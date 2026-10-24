@@ -1,22 +1,18 @@
 <!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https://api.github.com; img-src 'self' data:; frame-src 'self'; base-uri 'none'; form-action 'none'">
-<meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex,nofollow">
-<title>Задачи Omobonus</title>
-<link rel="icon" href="data:,">
-<link rel="stylesheet" href="base.css">
-<link rel="stylesheet" href="ui.css">
-<script type="module" src="app.js"></script>
-</head>
-<body class="dt-mode">
-<header id="hdr"><h1>Omobonus</h1><nav id="views" hidden><button type="button" class="hdr-b on" data-v="tasks">Задачи</button><button type="button" class="hdr-b" data-v="seo">SEO-панель</button></nav><span id="ws-sync" class="ws-ok-local">Не подключено</span><button type="button" id="logout" class="hdr-b" hidden>Выйти</button></header>
-<div id="ws-alert" role="alert"></div>
-<main id="dt-root"><noscript>Для работы панели нужен JavaScript.</noscript></main>
-<section id="seo-view" hidden><div id="seo-bar"></div><iframe id="seo-frame" title="SEO-панель" allow="clipboard-write"></iframe></section>
-<div id="toast" role="status"></div>
-</body>
+<html lang="ru" suppressHydrationWarning>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-rnXqjawjzfKv+00OUK9eEYn93TW4M124ptykp5lD8Do='; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src https://api.github.com; base-uri 'none'; form-action 'none'" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/omobonus-panel/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Omobonus Workspace</title>
+    <script>try{var t=localStorage.getItem("omobonus-ui-theme")||"light";if(t==="system")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.classList.add(t)}catch(e){}</script>
+    <script type="module" crossorigin src="/omobonus-panel/assets/index-DxF1923n.js"></script>
+    <link rel="stylesheet" crossorigin href="/omobonus-panel/assets/index-CY0FOLaf.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
