@@ -2,6 +2,7 @@
 // но данные читаются и пишутся напрямую в приватный omobonus-workspace через API GitHub.
 import { PRIORITIES, STATUSES } from './core.js'
 import * as gh from './github.js'
+import * as seo from './seo.js'
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 const ACT = { created: 'создана', edited: 'изменена', closed: 'закрыта', reopened: 'открыта снова' }
@@ -31,11 +32,30 @@ const toast = (t) => {
 }
 
 // ---------- вход ----------
+// ---------- разделы: задачи / SEO-панель ----------
+const views = document.getElementById('views')
+function showView(v) {
+  for (const b of views.querySelectorAll('[data-v]')) b.classList.toggle('on', b.dataset.v === v)
+  root.hidden = v !== 'tasks'
+  if (v === 'seo') seo.open(false, login)
+  else seo.hide()
+}
+views.addEventListener('click', (e) => {
+  const v = e.target.closest('[data-v]')?.dataset.v
+  if (v) showView(v)
+})
+document.getElementById('seo-bar').addEventListener('click', (e) => {
+  if (e.target.id === 'seo-refresh') seo.open(true, login)
+})
+
 function login(err = '') {
   gh.forget()
+  seo.reset()
   tasks = []
   form = closing = openId = null
   outBtn.hidden = true
+  views.hidden = true
+  root.hidden = false
   status('off')
   root.innerHTML = `<form class="dt-form dt-login" id="login" autocomplete="off">
     <b>Вход в панель задач Omobonus</b>
@@ -56,6 +76,8 @@ root.addEventListener('submit', async (e) => {
   try {
     await gh.load()
     outBtn.hidden = false
+    views.hidden = false
+    showView('tasks')
     reload(true)
   } catch (err) {
     login(err.message)

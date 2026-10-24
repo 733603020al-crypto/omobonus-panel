@@ -29,9 +29,9 @@ function toB64(s) {
 }
 const fromB64 = (b) => dec.decode(Uint8Array.from(atob(b.replace(/\s/g, '')), (c) => c.charCodeAt(0)))
 
-const url = () => `${CONFIG.api}/repos/${encodeURIComponent(CONFIG.owner)}/${encodeURIComponent(CONFIG.repo)}/contents/${CONFIG.path.split('/').map(encodeURIComponent).join('/')}`
+const url = (p = CONFIG.path) => `${CONFIG.api}/repos/${encodeURIComponent(CONFIG.owner)}/${encodeURIComponent(CONFIG.repo)}/contents/${p.split('/').map(encodeURIComponent).join('/')}`
 
-async function gh(method, u, body) {
+async function gh(method, u, body, accept = 'application/vnd.github+json') {
   if (!token) throw new TaskError('AUTH', 'Введите ключ доступа GitHub')
   let r
   try {
@@ -41,7 +41,7 @@ async function gh(method, u, body) {
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
       headers: {
-        accept: 'application/vnd.github+json',
+        accept,
         authorization: 'Bearer ' + token,
         'x-github-api-version': '2022-11-28',
         ...(body ? { 'content-type': 'application/json' } : {}),
@@ -105,3 +105,14 @@ export async function save(op) {
 }
 
 export const similar = (title) => findSimilar(title, data?.tasks || [])
+
+// Только чтение любого JSON-файла из omobonus-workspace (например, данные SEO-панели).
+// Файл может быть больше 1 МБ, поэтому берётся «сырым» содержимым.
+export async function readJson(p) {
+  try {
+    return await gh('GET', `${url(p)}?ref=${encodeURIComponent(CONFIG.branch)}&t=${Date.now()}`, undefined, 'application/vnd.github.raw+json')
+  } catch (e) {
+    if (e.code === 'NOT_FOUND_REPO') throw new TaskError('NOT_FOUND', `Данные ${p} ещё не опубликованы в omobonus-workspace.`)
+    throw e
+  }
+}
